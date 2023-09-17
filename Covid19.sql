@@ -130,4 +130,3 @@ BEGIN CATCH
     PRINT 'An error occurred: ' + ERROR_MESSAGE();
 END CATCH;
 
-FROM PercentPopulationVaccinated
