@@ -1,10 +1,15 @@
+/*
+Data Exploration Using COVID19 Data
+
+Skills Employed: Joins, CTE's, Temporary Tables, Windows Functions, Aggregate Functions, View Creation, Creating Cases, Data Type Conversion, Try and Catch, NULL Handling
+*/
 USE [CovidData]
 
 
 SELECT Location, date, total_cases,  new_cases, total_deaths, population
 From COV19Deaths
 ORDER BY 1,2 
-
+----COUNTRY-WISE ANALYSIS
 ----Total Cases VS Total Deaths
 SELECT Location, date, total_cases, total_deaths, (CAST(total_deaths AS FLOAT)/ total_cases) * 100 as deathPercentage
 From COV19Deaths
@@ -36,7 +41,8 @@ FROM COV19Deaths
 Where continent is not null
 GROUP BY Continent
 ORDER BY  totalDeathCount DESC
-
+    
+----GLOBAL NUMBERS
 --Cases around the world- Global Numbers
 SELECT
     date,
@@ -61,7 +67,7 @@ WHERE DEA.continent is not null
 and DEA.date =VAC.date
 ORDER BY 2,3
 
----Using CTE
+---Using CTE to perform calcualtion on partition by
 WITH popVsVac (Continent, Location, Date, Population, new_vaccinatios, rollingCountOfVaccinatedPeople)
 AS
 (
@@ -77,7 +83,7 @@ SELECT *, (rollingCountOfVaccinatedPeople/ Population)* 100 AS RollingPercentage
 FROM popVsVac
 
 
----Temporary Table
+---Using Temporary Table to perform calcualtion on partition by
 DROP TABLE IF exists #percentPopulationVaccinated
 CREATE TABLE #percentPopulationVaccinated
 (Continent nvarchar(255), Location nvarchar(255), Date datetime, Population numeric, new_vaccinations numeric, rollingCountOfVaccinatedPeople numeric)
@@ -105,5 +111,23 @@ WHERE DEA.continent is not null
 and DEA.date =VAC.date
 --ORDER BY 2,3
 
-SELECT *
+SELECT * 
+    FROM PercentPopulationVaccinated
+
+--Using Try and Catch to make sure the NULLS are replaced by zero
+
+BEGIN TRY
+Select Location, Population,
+ISNULL(MAX(total_cases), 0) as HighestInfectionCount,  
+ISNULL(MAX(CAST(total_cases/population))*100, 0) as PercentPopulationInfected
+From COV19Deaths
+--Where location like 'India'
+Group by Location, population
+order by PercentPopulationInfected desc
+END TRY
+BEGIN CATCH
+    -- Handle the error
+    PRINT 'An error occurred: ' + ERROR_MESSAGE();
+END CATCH;
+
 FROM PercentPopulationVaccinated
